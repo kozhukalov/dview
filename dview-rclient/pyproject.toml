@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "dview-rclient"
+version = "1.0.0"
+description = "dview-rclient is a HTTP API and CLI ROOT Framwork based client application for processing data from the following digitizers: [TQDC,ADC64,DRS]"
+authors = ["GreenLab <greenlab@jinr.ru>"]
+license = "Apache License, Version 2.0"
+
+[tool.poetry.dependencies]
+python = "^3.6"
+Flask = "^2.0.2"
+click = "^8.0.3"
+Flask-RESTful = "^0.3.9"
+gpiozero = "^1.6.2"
+requests = "^2.26.0"
+PyYAML = ">=5.3.1"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+dview-rclient = 'dview_rclient.main:rclient'

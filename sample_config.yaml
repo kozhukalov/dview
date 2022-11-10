@@ -1,8 +1,8 @@
 # Server settings
 DEF_HOST: 159.93.74.31
-DEF_PORT: 5015
+DEF_PORT: 5010
 
-# Web settings
+# Web server settings
 DEF_SITE_ROOT: '/home/tao/soft/dview/dview-server' # site location on the server
 DEF_DIR_VIEW: "/web/view/"
 DEF_DIR_MODEL: "/dview_server/web/model/"

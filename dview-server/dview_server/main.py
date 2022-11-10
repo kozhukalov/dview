@@ -20,8 +20,8 @@ def main():
     return init.GetBody(APP.config['USER'])
 
 
-@APP.route('/read_json_files')
-def read_json_files():
+@APP.route('/read_single_event')
+def read_single_event():
     return jsonify('ok')
 
 

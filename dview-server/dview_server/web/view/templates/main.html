@@ -12,19 +12,15 @@
    </head>
 
     <body>
-        <header>
-
-        </header>
         {% block content %}
-        <!-- {{ config['USER']['DEF_DIR_VIEW'] }} -->
-            <div id="RootBrowser" path="" jsons="../static/wave.json">
+            <!-- <iframe class="responsive-iframe" src="http://{{config['USER']['DEF_HOST']}}:{{config['USER']['DEF_PORT']}}/static/con.html" style="width: 100%; height: 20px;"></iframe>
+            <iframe class="responsive-iframe" src="http://{{config['USER']['DEF_HOST']}}:{{config['USER']['DEF_PORT']}}/static/bro.html" style="width: 100%; height: 900px;"></iframe> -->
+            <div id="RootBrowser" path="" jsons="../static/single_wf.json">
                 loading scripts ...
-             </div>
+                </div>
             <script type="module">
                 JSROOT.buildGUI("RootBrowser");
-                // JSROOT.draw("simpleGUI", wave, "");
-                // console.log({{ config['USER']['DEF_DIR_VIEW'] }});
-             </script>
+            </script>
         {% endblock %}
     </body>
 </html>

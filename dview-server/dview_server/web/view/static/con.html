@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Data View Server</title>
+        <script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+        <script src="https://root.cern/js/latest/build/jsroot.js"></script>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT" crossorigin="anonymous">
+   </head>
+
+    <body>
+        Control Panel:
+        <!-- <div class="row">
+            <label for="event_num" class="w-50 col-form-label">Event number:</label>
+            <input id="event_num" name="event_num" class="w-50 form-control text-center" type="number" step="1" placeholder=">1" style="width: 100px; height: 20px;">
+            <span>&nbsp;&nbsp;&nbsp;&nbsp;
+                <button id="read_event_btn" class="btn btn-primary btn-sm" name="read_event_btn" onclick="read_single_event();" style="width: 100px; height: 20px;">Read single event</button>
+            </span>
+            <span>&nbsp;&nbsp;&nbsp; Status: <span id="read_event_status" style="width: 100px; height: 20px;">?</span></span>
+        </div> -->
+
+
+
+        <script>
+            function sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            function read_single_event(){
+                $.ajax({
+                    url:"/read_single_event",
+                    context: document.body,
+                    success: function(data) {
+                        $('#read_event_status').html("<font color='green'>OK</font>");
+                        sleep(3000).then(() => {
+                            $('#read_event_status').html("");
+                        });
+                    },
+                    error: function(data) {
+                        $('#read_event_status').html("<font color='red'>Could not read event!</font>");
+                        sleep(3000).then(() => {
+                            $('#read_event_status').html("");
+                        });
+                    }
+                });
+            }
+        </script>
+
+
+
+    </body>
+</html>

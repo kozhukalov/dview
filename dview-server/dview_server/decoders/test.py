@@ -22,4 +22,5 @@ nevents = adc.get_event_number()
 meta = adc.read_meta(35)
 print(meta)
 
-# adc.read_event(35)
+# data = adc.read_event(1)
+# print(data)

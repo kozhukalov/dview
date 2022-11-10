@@ -1,0 +1,178 @@
+{% extends 'main.html' %}
+<html>
+    <head>
+        {% block head %}
+            <title>Tile page</title>
+            <script src="https://root.cern/js/latest/build/jsroot.js"></script>
+            <script src="{{ url_for('static',filename='js/tile.js') }}"></script>
+            <link rel="stylesheet" type="text/css" href="../static/css/main.css">
+            <link rel="stylesheet" type="text/css" href="../static/css/tile.css">
+        {% endblock %}
+        <style>
+            .spectra {
+                width: 100%;
+            }
+            .table_spectra {
+                width: 50%;
+                margin: 0 auto;
+            }
+        </style>
+   </head>
+
+    <body>
+        {% block content %}
+        <div class="address">
+            / Database / Scan {{data['sid']}} / Overvoltage {{data['sov']}}V / Tile #{{data['torn']}} SN: {{data['pars']['tsn']}}  :
+        </div>
+
+        <div class="pars" >
+            <table class="table_pars">
+                <caption>TABLE OF PARAMETERS:</caption>
+                <tr>
+                    <th >SiPM#</th>
+                    {% for i in range(1,config['USER']['DEF_SIPM_NUM']+1) %}
+                        <th >SiPM {{i}}</th>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <th >GAIN</th>
+                    {% for i in data['pars']['gain'] %}
+                        <td >{{i}}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <th >CT</th>
+                    {% for i in data['pars']['ct'] %}
+                        <td >{{i}}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <th >Mu</th>
+                    {% for i in data['pars']['mu'] %}
+                        <td >{{i}}</td>
+                    {% endfor %}
+                </tr>
+            </table>
+        </div>
+
+        <div class="par_gain" >
+            <table class="table_plots">
+                <caption>GAIN - Tile [SN: {{data['pars']['tsn']}}, #{{data['torn']}}]</caption>
+                <tr>
+                    {% for i in [2,3,1] %}
+                        <td id="gain_map_{{i}}d" style="width: 370px; height:230px;">{{i}}</td>
+                    {% endfor %}
+                </tr>
+            </table>
+        </div>
+        <!-- <hr> -->
+        <div class="par_ct" >
+            <table class="table_plots">
+                <caption>CROSSTALK - Tile [SN: {{data['pars']['tsn']}}, #{{data['torn']}}]</caption>
+                <tr>
+                    {% for i in [2,3,1] %}
+                        <td id="ct_map_{{i}}d" style="width: 370px; height:230px;">{{i}}D</td>
+                    {% endfor %}
+                </tr>
+            </table>
+        </div>
+        <!-- <hr> -->
+        <div class="par_mu" >
+            <table class="table_plots">
+                <caption>NUMBER OF PHOTOELECTRONS - Tile [SN: {{data['pars']['tsn']}}, #{{data['torn']}}]</caption>
+                <tr>
+                    {% for i in [2,3,1] %}
+                        <td id="mu_map_{{i}}d" style="width: 370px; height:230px;">{{i}}D</td>
+                    {% endfor %}
+                </tr>
+            </table>
+        </div>
+        <!-- <hr> -->
+        <div class="spectra" >
+            <table class="table_spectra">
+                <caption><h4>Tile [SN: {{data['pars']['tsn']}}, #{{data['torn']}}]</h4></caption>
+                {% for y in range(0,config['USER']['DEF_SIPM_NUM_Y']) %}
+                    <tr>
+                        {% for x in range(0,config['USER']['DEF_SIPM_NUM_X']) %}
+                            {% set i = y*4 + x %}
+                            <td id="sipm_{{i}}" style="width: 275px; height:160px;">{{i}}D</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </table>       
+        </div>
+        
+        <script type="module">
+            
+            // import { gStyle } from 'https://root.cern/js/latest/modules/main.mjs';
+            // gStyle.SetStatFormat = "4.3f";
+            // gStyle.SetFitFormat = "4.3f";
+            // gStyle.SetOptStat = "emri";
+            // gStyle.SetOptFit = "111";
+            
+            // JSROOT.gStyle.SetStatY = 0.9;
+            // JSROOT.gStyle.SetStatX = 0.9;
+            // JSROOT.gStyle.SetStatW = 0.2;
+            // JSROOT.gStyle.SetStatH = 0.2;
+            // gStyle.SetTitleY = 0.98;
+            // gStyle.SetTitleAlign = 23;
+            // alert(gStyle.SetStatX);
+            
+
+            let nsipm = {{config['USER']['DEF_SIPM_NUM']}};
+            let spectra = {{data['spectra']|tojson}};
+            let tile_data = {{data['pars']|tojson}};
+            let plots = {{data['plots']|tojson}};
+
+
+            // Gain parameter  //////////////////////
+            let gain_1d = JSROOT.parse(plots['gain_1d']);
+            gain_1d['fTitle'] = "GAIN Distribution";
+            JSROOT.draw("gain_map_1d", gain_1d, "");
+
+            let gain_2d = JSROOT.parse(plots['gain_2d'])
+            gain_2d["fTitle"] = "GAIN 2D MAP";
+            JSROOT.draw("gain_map_2d", gain_2d, "colzTEXTbox");
+
+            let gain_3d = JSROOT.parse(plots['gain_2d'])
+            gain_3d["fTitle"] = "GAIN 3D MAP";
+            JSROOT.draw("gain_map_3d", gain_3d, "lego2");
+
+
+            // Crosstalk parameter //////////////////////
+            let ct_1d = JSROOT.parse(plots['ct_1d']);
+            ct_1d['fTitle'] = "Crosstalk Distribution";
+            JSROOT.draw("ct_map_1d", ct_1d, "");
+
+            let ct_2d = JSROOT.parse(plots['ct_2d']);
+            ct_2d["fTitle"] = "CROSSTALK 2D MAP";
+            JSROOT.draw("ct_map_2d", ct_2d, "colzTEXTbox");
+
+            let ct_3d = JSROOT.parse(plots['ct_2d']);
+            ct_3d["fTitle"] = "CROSSTALK 3D MAP";
+            JSROOT.draw("ct_map_3d", ct_3d, "lego2");
+
+
+            // Crosstalk parameter //////////////////////
+            let mu_1d = JSROOT.parse(plots['mu_1d']);
+            mu_1d['fTitle'] = "Numbers of photoelectrons distribution";
+            JSROOT.draw("mu_map_1d", mu_1d, "");
+
+            let mu_2d = JSROOT.parse(plots['mu_2d']);
+            mu_2d["fTitle"] = "Numbers of photoelectrons 2D MAP";
+            JSROOT.draw("mu_map_2d", mu_2d, "colzTEXTbox");
+
+            let mu_3d = JSROOT.parse(plots['mu_2d']);
+            mu_3d["fTitle"] = "Numbers of photoelectrons 3D MAP";
+            JSROOT.draw("mu_map_3d", mu_3d, "lego2");
+            
+            // Spectra  //////////////////////
+            for (let i = 0; i < nsipm; i++) 
+            {
+                let spectrum = JSROOT.parse(spectra[i]);
+                JSROOT.draw("sipm_"+i, spectrum, "colz");
+            }
+         </script>
+         {% endblock %}
+    </body>
+</html>

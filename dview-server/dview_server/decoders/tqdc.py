@@ -30,6 +30,7 @@ class TQDCDecoder:
         self.fileIndex = None
         self.devices = None
         self.metaData = dict()
+        self.eventData = dict()
 
 
     def get_event_number(self):
@@ -113,7 +114,158 @@ class TQDCDecoder:
         return dev
 
 
-    def read_meta(self,event=1):
+    # def read_meta(self,event=1):
+    #     msg = "Reading metadata for Event#{:d}".format(event)
+    #     logger.info(msg)
+    #     try:
+    #         pos = self.fileIndex[self.fileIndex['ev']==event][0]['po']
+    #     except IndexError:
+    #         msg = "Event# {:d} not found".format(event)
+    #         logger.error(msg)
+    #         raise Exception(msg)
+
+    #     # event_header_size = 4*3
+    #     dev_list = []
+    #     data = dict()
+    #     event_header = dict()
+    #     device_header = dict()
+    #     mstream_header = dict()
+    #     mstream_data_block_header = dict()
+    #     tdc_event_header = dict()
+    #     tdc_event_trailer = dict()
+    #     tdc_leading_edge = dict()
+    #     tdc_trailing_edge = dict()
+    #     tdc_err = dict()
+    #     adc_header = dict()
+    #     buffer = []
+    #     with open(self.dataFile, mode='rb') as f:
+    #         f.seek(pos)
+    #         event_header.update({"sync_word": struct.unpack('<I', f.read(word_size))[0]})
+    #         event_header.update({"size": struct.unpack('<I', f.read(word_size))[0]})
+    #         event_header.update({"event_abs": struct.unpack('<I', f.read(word_size))[0]})
+    #         event_size = int(event_header['size']/4)
+    #         for i in range(event_size):
+    #             buffer.append(f.read(word_size))
+
+    #     mstream_time_header_size = 2*4    # 8 bytes - time header
+    #     offset = 0
+    #     # Read out devices
+    #     while (offset != event_size):
+    #         device_header.update({'devsn': struct.unpack('<I', buffer[offset])[0]})
+    #         offset += 1
+    #         device_header.update({'id': (struct.unpack('<I', buffer[offset])[0] & 0xFF000000)>>24})
+    #         device_header.update({'length': (struct.unpack('<I', buffer[offset])[0] & 0x00FFFFFF)})
+    #         offset += 1
+
+    #         device_block_size = int(device_header['length']/word_size)
+    #         moffset = 0
+    #         # Read out MStreams
+    #         while (moffset != device_block_size):
+    #             mstream_header.update({ 'subtype': (struct.unpack('<I', buffer[moffset+offset])[0] & 0xFF000000) >> 24 })
+    #             mstream_header.update({ 'length': (struct.unpack('<I', buffer[moffset+offset])[0] & 0x0000FFFF) })
+    #             moffset += 1
+    #             mstream_header.update({ 'taisec': struct.unpack('<I', buffer[moffset+offset])[0] })
+    #             moffset += 1
+    #             mstream_header.update({ 'tainsec': (struct.unpack('<I', buffer[moffset+offset])[0] & 0xFFFFFFFC) >> 2 })
+    #             mstream_header.update({ 'taiflags': (struct.unpack('<I', buffer[moffset+offset])[0] & 0x3) })
+    #             moffset +=1
+
+    #             if (mstream_header['length'] == 0):
+    #                 msg = "Event#{:d} is corrupted. MStream block has zero length".format(event)
+    #                 logger.error(msg)
+    #                 raise Exception(msg)
+
+    #             if (mstream_header['subtype'] == 0):
+    #                 doffset = 0
+    #                 mstream_data_size = int((mstream_header['length'] - mstream_time_header_size)/word_size)
+    #                 active_channels = []
+    #                 mstream_data_block_list = []
+    #                 # MStream subtype 0
+    #                 while (doffset != mstream_data_size):
+    #                     mstream_data_block_header.update({ 'type': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0xF0000000) >> 28 })
+    #                     mstream_data_block_header.update({ 'ch': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0xF000000)  >> 24 })
+    #                     mstream_data_block_header.update({ 'spec': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0x70000)    >> 16 })
+    #                     mstream_data_block_header.update({ 'length': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0xFFFF) })
+    #                     doffset += 1
+
+    #                     if (mstream_data_block_header['type'] == 0):
+    #                         # TDC Data type
+    #                         data_size = mstream_data_block_header['length']/4;
+    #                         device_data_header = dict()
+    #                         while (data_size != 0):
+    #                             tdc_data_type = (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0xF0000000) >> 28
+    #                             if (tdc_data_type == 2):
+    #                                 # Decode TDC event header
+    #                                 tdc_event_header.update({ 'timestamp': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0xFFF) })
+    #                                 tdc_event_header.update({ 'evnum': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0xFFF000) >> 12 })
+    #                                 tdc_event_header.update({ 'id': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0xF000000) >> 24 })
+    #                                 tdc_event_header.update({ 'n': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0xF0000000) >> 28 })
+    #                                 doffset += 1
+    #                                 device_data_header = tdc_event_header
+    #                             elif (tdc_data_type == 3):
+    #                                 # Decode TDC event trailer
+    #                                 tdc_event_trailer.update({ 'wcount': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0xFFF) })
+    #                                 tdc_event_trailer.update({ 'evnum': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0xFFF000) >> 12 })
+    #                                 tdc_event_trailer.update({ 'id': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0xF000000) >> 24 })
+    #                                 tdc_event_trailer.update({ 'n': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0xF0000000) >> 28 })
+    #                                 doffset += 1
+    #                                 device_data_header = tdc_event_trailer
+    #                             elif (tdc_data_type == 4):
+    #                                 # Decode TDC data leading edge
+    #                                 tdc_leading_edge.update({ 'rcdata': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0x3) })
+    #                                 tdc_leading_edge.update({ 'ledge': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0x1FFFFC) >> 2 })
+    #                                 tdc_leading_edge.update({ 'ch': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0x1E00000) >> 21 })
+    #                                 tdc_leading_edge.update({ 'n': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0xF0000000) >> 28 })
+    #                                 doffset += 1
+    #                                 device_data_header = tdc_leading_edge
+    #                             elif (tdc_data_type == 5):
+    #                                 # Decode TDC data trailing edge
+    #                                 tdc_trailing_edge.update({ 'rcdata': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0x3) })
+    #                                 tdc_trailing_edge.update({ 'tedge': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0x1FFFFC) >> 2 })
+    #                                 tdc_trailing_edge.update({ 'ch': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0x1E00000) >> 21 })
+    #                                 tdc_trailing_edge.update({ 'n': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0xF0000000) >> 28 })
+    #                                 doffset += 1
+    #                                 device_data_header = tdc_trailing_edge
+    #                             elif (tdc_data_type == 6):
+    #                                 # Decode TDC error
+    #                                 tdc_err.update({ 'err': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0x7FFF) })
+    #                                 tdc_err.update({ 'id': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0xF000000)  >> 24 })
+    #                                 tdc_err.update({ 'n': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0xF0000000) >> 28 })
+    #                                 doffset += 1
+    #                                 device_data_header = tdc_err
+    #                             data_size -= 1
+    #                     elif (mstream_data_block_header['type'] == 1):
+    #                         # ADC Data type
+    #                         adc_header.update({ 'timestamp': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0xFFFF) })
+    #                         adc_header.update({ 'length': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0xFFFF0000) >> 16 })
+    #                         doffset +=1
+    #                         active_channels.append(mstream_data_block_header['ch'])
+    #                         sn = int((adc_header['length']/4)*2)       # Number of samples
+    #                         doffset += int(sn/2)
+    #                         device_data_header = adc_header
+    #                     ##end of data type switch
+    #                     mstream_data_block_list.append({'mstream_data_header': dict(mstream_data_block_header),\
+    #                                                     'device_data_header':device_data_header})
+    #             elif (mstream_header['subtype'] == 1):
+    #                 # there is no data for TQDC
+    #                 pass
+    #             ##end of subtype switch
+    #             moffset += int((mstream_header['length'] - mstream_time_header_size)/word_size)
+    #         ##end of loop over mstreams
+    #         data.update({'device_header':device_header})
+    #         data.update({'mstream_header':mstream_header})
+    #         data.update({'mstream_data':mstream_data_block_list})
+    #         data.update({'sample_number': sn})
+    #         data.update({'active_channels': active_channels})
+    #         dev_list.append({'device': device_header['devsn'], 'data': data})
+    #         self.metaData.update({"event_number": event,'event_header':event_header,'data':dev_list})
+
+    #         offset += int(device_header['length']/word_size)
+    #     ##end of loop over devices
+    #     return self.metaData
+
+
+    def read_event(self,event=1):
         msg = "Reading metadata for Event#{:d}".format(event)
         logger.info(msg)
         try:
@@ -136,6 +288,7 @@ class TQDCDecoder:
         tdc_trailing_edge = dict()
         tdc_err = dict()
         adc_header = dict()
+        wave_dev_list = []
         buffer = []
         with open(self.dataFile, mode='rb') as f:
             f.seek(pos)
@@ -179,6 +332,7 @@ class TQDCDecoder:
                     mstream_data_size = int((mstream_header['length'] - mstream_time_header_size)/word_size)
                     active_channels = []
                     mstream_data_block_list = []
+                    wave_list = []
                     # MStream subtype 0
                     while (doffset != mstream_data_size):
                         mstream_data_block_header.update({ 'type': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0xF0000000) >> 28 })
@@ -238,10 +392,18 @@ class TQDCDecoder:
                             adc_header.update({ 'timestamp': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0xFFFF) })
                             adc_header.update({ 'length': (struct.unpack('<I', buffer[doffset+moffset+offset])[0] & 0xFFFF0000) >> 16 })
                             doffset +=1
-                            active_channels.append(mstream_data_block_header['ch'])
+                            ch = mstream_data_block_header['ch']
+                            active_channels.append(ch)
                             sn = int((adc_header['length']/4)*2)       # Number of samples
-                            doffset += int(sn/2)
                             device_data_header = adc_header
+                            waveform = []
+                            for s in range(int(sn/2)):
+                                ind = doffset + moffset + offset + s
+                                waveform.append( struct.unpack('<I', buffer[ind])[0] & 0xFFFF )
+                                waveform.append( (struct.unpack('<I', buffer[ind])[0] & 0xFFFF0000) >> 16 )
+                            ##end of loop over samples
+                            wave_list.append({'devsn':device_header['devsn'],'ch': ch,'wf': waveform})
+                            doffset += int(sn/2)
                         ##end of data type switch
                         mstream_data_block_list.append({'mstream_data_header': dict(mstream_data_block_header),\
                                                         'device_data_header':device_data_header})
@@ -258,176 +420,10 @@ class TQDCDecoder:
             data.update({'active_channels': active_channels})
             dev_list.append({'device': device_header['devsn'], 'data': data})
             self.metaData.update({"event_number": event,'event_header':event_header,'data':dev_list})
+            # Add waveforms
+            wave_dev_list.append({'device': device_header['devsn'], 'data': wave_list})
 
             offset += int(device_header['length']/word_size)
         ##end of loop over devices
-        return self.metaData
-
-
-    def read_event(self,event):
-        print('Reading single waveform for event#',event)
-        try:
-            pos = self.fileIndex[self.fileIndex['ev']==event][0]['po']
-        except IndexError:
-            msg = "Error: Event# {:d} is not found".format(event)
-            logger.error(msg)
-            raise Exception(msg)
-
-        # event_header_size = 4*3
-        event_header = dict()
-        buffer = []
-        with open(self.dataFile, mode='rb') as f:
-            f.seek(pos)
-            # event_header = struct.unpack('<III', f.read(event_header_size))
-            event_header.update({"sync_word": struct.unpack('<I', f.read(word_size))})
-            event_header.update({"size": struct.unpack('<I', f.read(word_size))})
-            event_header.update({"event": struct.unpack('<I', f.read(word_size))})
-            print("Event header: sync word:",hex(event_header['sync_word']),'size:',event_header['size'],'Abs.event#',event_header['event'])
-            bs = int(event_header['size']/4)
-            for i in range(bs):
-                buffer.append(f.read(word_size))
-        ##end of while
-
-
-        offset = 0
-        end = bs
-        data = dict()
-        device_header = dict()
-        mstream_header = dict()
-        mstream_data_block_header = dict()
-        tdc_event_header = dict()
-        tdc_event_trailer = dict()
-        tdc_leading_edge = dict()
-        tdc_trailing_edge = dict()
-        tdc_err = dict()
-        tdc_data = dict()
-        adc_header = dict()
-        adc_data = dict()
-        wf_list = []
-        active_channels = []
-
-        # Read out devices
-        while (end != 0):
-            device_header.update({'devsn': struct.unpack('<I', buffer[offset])[0]})
-            offset += 1
-            device_header.update({'id': (struct.unpack('<I', buffer[offset])[0] & 0xFF000000)>>24})
-            device_header.update({'length': (struct.unpack('<I', buffer[offset])[0] & 0x00FFFFFF)})
-            offset += 1
-            # Read out MStreams
-            while (end != 0):
-                mstream_header.update({ 'subtype': (struct.unpack('<I', buffer[offset])[0] & 0x3) })
-                mstream_header.update({ 'ch': (struct.unpack('<I', buffer[offset])[0] & 0xFF000000) >> 24 })
-                mstream_header.update({ 'length': (struct.unpack('<I', buffer[offset])[0] & 0x00FFFFFC) >> 2 })
-                offset += 1
-                mstream_header.update({ 'taisec': struct.unpack('<I', buffer[offset])[0] })
-                offset += 1
-                mstream_header.update({ 'tainsec': (struct.unpack('<I', buffer[offset])[0] & 0xFFFFFFFC) >> 2 })
-                mstream_header.update({ 'taiflags': (struct.unpack('<I', buffer[offset])[0] & 0x3) })
-                offset +=1
-
-                if (mstream_header['length'] == 0):
-                    logger.error("Event#{:d} is corrupted. MStream block has zero length".format(event))
-                    return
-
-                data_length = 0
-                if (mstream_header['subtype'] == 0):
-                    # MStream subtype 0
-                    while (end != 0):
-                        mstream_data_block_header.update({ 'type': (struct.unpack('<I', buffer[offset])[0] & 0xF0000000) >> 28 })
-                        mstream_data_block_header.update({ 'ch': (struct.unpack('<I', buffer[offset])[0] & 0xF000000)  >> 24 })
-                        mstream_data_block_header.update({ 'spec': (struct.unpack('<I', buffer[offset])[0] & 0x70000)    >> 16 })
-                        mstream_data_block_header.update({ 'length': (struct.unpack('<I', buffer[offset])[0] & 0xFFFF) })
-                        offset += 1
-                        if (mstream_data_block_header['type'] == 0):
-                            # TDC Data type
-                            data_length = mstream_data_block_header['length']/4;
-                            while (data_length != 0):
-                                tdc_data_type = (struct.unpack('<I', buffer[offset])[0] & 0xF0000000) >> 28
-                                if (tdc_data_type == 2):
-                                    # Decode TDC event header
-                                    tdc_event_header.update({ 'timestamp': (struct.unpack('<I', buffer[offset])[0] & 0xFFF) })
-                                    tdc_event_header.update({ 'evnum': (struct.unpack('<I', buffer[offset])[0] & 0xFFF000) >> 12 })
-                                    tdc_event_header.update({ 'id': (struct.unpack('<I', buffer[offset])[0] & 0xF000000) >> 24 })
-                                    tdc_event_header.update({ 'n': (struct.unpack('<I', buffer[offset])[0] & 0xF0000000) >> 28 })
-                                    offset += 1
-                                elif (tdc_data_type == 3):
-                                    # Decode TDC event trailer
-                                    tdc_event_trailer.update({ 'wcount': (struct.unpack('<I', buffer[offset])[0] & 0xFFF) })
-                                    tdc_event_trailer.update({ 'evnum': (struct.unpack('<I', buffer[offset])[0] & 0xFFF000) >> 12 })
-                                    tdc_event_trailer.update({ 'id': (struct.unpack('<I', buffer[offset])[0] & 0xF000000) >> 24 })
-                                    tdc_event_trailer.update({ 'n': (struct.unpack('<I', buffer[offset])[0] & 0xF0000000) >> 28 })
-                                    offset += 1
-                                elif (tdc_data_type == 4):
-                                    # Decode TDC data leading edge
-                                    tdc_leading_edge.update({ 'rcdata': (struct.unpack('<I', buffer[offset])[0] & 0x3) })
-                                    tdc_leading_edge.update({ 'ledge': (struct.unpack('<I', buffer[offset])[0] & 0x1FFFFC) >> 2 })
-                                    tdc_leading_edge.update({ 'ch': (struct.unpack('<I', buffer[offset])[0] & 0x1E00000) >> 21 })
-                                    tdc_leading_edge.update({ 'n': (struct.unpack('<I', buffer[offset])[0] & 0xF0000000) >> 28 })
-                                    offset += 1
-                                elif (tdc_data_type == 5):
-                                    # Decode TDC data trailing edge
-                                    tdc_trailing_edge.update({ 'rcdata': (struct.unpack('<I', buffer[offset])[0] & 0x3) })
-                                    tdc_trailing_edge.update({ 'tedge': (struct.unpack('<I', buffer[offset])[0] & 0x1FFFFC) >> 2 })
-                                    tdc_trailing_edge.update({ 'ch': (struct.unpack('<I', buffer[offset])[0] & 0x1E00000) >> 21 })
-                                    tdc_trailing_edge.update({ 'n': (struct.unpack('<I', buffer[offset])[0] & 0xF0000000) >> 28 })
-                                    offset += 1
-                                elif (tdc_data_type == 6):
-                                    # Decode TDC error
-                                    tdc_err.update({ 'err': (struct.unpack('<I', buffer[offset])[0] & 0x7FFF) })
-                                    tdc_err.update({ 'id': (struct.unpack('<I', buffer[offset])[0] & 0xF000000)  >> 24 })
-                                    tdc_err.update({ 'n': (struct.unpack('<I', buffer[offset])[0] & 0xF0000000) >> 28 })
-                                    offset += 1
-                                else:
-                                    offset += 1
-                                data_length -= 1
-                        elif (mstream_data_block_header['type'] == 1):
-                            # ADC Data type
-                            adc_header.update({ 'timestamp': (struct.unpack('<I', buffer[offset])[0] & 0xFFFF) })
-                            adc_header.update({ 'length': (struct.unpack('<I', buffer[offset])[0] & 0xFFFF0000) >> 16 })
-                            offset +=1
-                            active_channels.append(mstream_data_block_header['ch'])
-                            ch = mstream_data_block_header['ch']
-                            sn = int((adc_header['length']/4)*2)       # Number of samples
-                            wave = []
-                            for s in range(int(sn/2)):
-                                ind = offset+s
-                                wave.append(struct.unpack('<I', buffer[ind])[0] & 0xFFFF)
-                                wave.append((struct.unpack('<I', buffer[ind])[0] & 0xFFFF0000) >> 16)
-                            ##end of loop over samples
-                            wf_list.append({'ch': ch,'wf': wave})
-                            offset += int(sn/2)
-                        ##end of data type switch
-
-                        end = bs - offset
-                        if (end < 0): break
-                    if (end < 0): break
-                    # tdc data
-                    tdc_data.update({'tdc_event_header': tdc_event_header})
-                    tdc_data.update({'tdc_event_trailer': tdc_event_trailer})
-                    tdc_data.update({'tdc_leading_edge': tdc_leading_edge})
-                    tdc_data.update({'tdc_trailing_edge': tdc_trailing_edge})
-                    tdc_data.update({'tdc_err': tdc_err})
-                    # adc data
-                    adc_header.update({'sn': sn})
-                    adc_header.update({'ach': active_channels})
-                    adc_data.update({'adc_header': adc_header})
-                    adc_data.update({'data': wf_list})
-                elif (mstream_header['subtype'] == 1):
-                    # there is no data for TQDC
-                    pass
-                ##end of subtype switch
-                # print(bs,offset,end)
-                if (end < 0): break
-            ##end of loop over mstreams
-        ##end of loop over devices
-
-        data.update({'event_header':event_header})
-        data.update({'device_header':device_header})
-        data.update({'mstream_header':mstream_header})
-        data.update({'mstream_data_block_header':mstream_data_block_header})
-        data.update({'tdc_data':tdc_data})
-        data.update({'adc_data':adc_data})
-        # print(data['adc_data']['data'])
-        return data
-
-
+        self.eventData.update({'meta': self.metaData, 'data': wave_dev_list})
+        return self.eventData

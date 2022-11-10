@@ -14,12 +14,12 @@ parser = reqparse.RequestParser()
 parser.add_argument("event", type=int)
 parser.add_argument("data_file", type=str)
 
-class ReadMeta(Resource):
+class ReadEvent(Resource):
     def post(self):
         args = parser.parse_args()
         data_file = args["data_file"]
         event = args["event"]
-        res = {"message": 'ok', "meta": None}
+        res = {"message": 'ok', "event_data": None}
         adc = TQDCDecoder()
 
         try:
@@ -30,7 +30,7 @@ class ReadMeta(Resource):
 
         try:
             adc.file_indexation()
-            res['meta'] = adc.read_meta(event)
+            res['event_data'] = adc.read_event(event)
         except BaseException as e:
             res['message'] = str(e)
             return jsonify(res)
@@ -41,4 +41,4 @@ class ServerStatus(Resource):
         return jsonify({"status": True})
 
 API.add_resource(ServerStatus, '/api/server_status')
-API.add_resource(ReadMeta, '/api/read_meta')
+API.add_resource(ReadEvent, '/api/read_event')

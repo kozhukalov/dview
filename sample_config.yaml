@@ -1,3 +1,12 @@
-endpoint: http://localhost:5010
+# Server settings
+DEF_HOST: 159.93.74.31
+DEF_PORT: 5015
+
+# Web settings
+DEF_SITE_ROOT: '/home/tao/soft/dview/dview-server' # site location on the server
+DEF_DIR_VIEW: "/web/view/"
+DEF_DIR_MODEL: "/dview_server/web/model/"
+DEF_DIR_TEMPLATES: "/dview_server/web/view/"  # relative path starts from module dir
+
 # Device type [tqdc | adc64 | drs] - determines data formats to be processed
 device: 'tqdc'

@@ -18,13 +18,13 @@ def server_status(config_file):
 @click.option("-d", "--data", "data_file", required=True, help="input remote data file")
 @click.option("-e", "--event", "event", required=True, help="event number")
 def read_meta(config_file,data_file,event):
-    res = api.read_meta(config_file,data_file,event)
+    res = api.read_event(config_file,data_file,event)
     if (res['status'] == False):
         print(res['message'])
         return
 
-    meta = res['data']['meta']
-    if (meta != None):
+    if (res['data']['event_data'] != None):
+        meta = res['data']['event_data']['meta']
         k1 = list(meta.keys())
         print('=== Metadata: ===')
         print(k1[2],' : ',meta[k1[2]])
@@ -42,5 +42,21 @@ def read_meta(config_file,data_file,event):
             for item in data[k2[2]]:
                 print('    ',item)
         print('=== ========= ===')
+    else:
+        print(res['data']['message'])
+
+@rclient.command()
+@click.option("-c", "--config", "config_file", required=True, help="config file")
+@click.option("-d", "--data", "data_file", required=True, help="input remote data file")
+@click.option("-e", "--event", "event", required=True, help="event number")
+def read_event(config_file,data_file,event):
+    res = api.read_event(config_file,data_file,event)
+    if (res['status'] == False):
+        print(res['message'])
+        return
+
+    if (res['data']['event_data'] != None):
+        event_data = res['data']['event_data']
+        print(event_data)
     else:
         print(res['data']['message'])

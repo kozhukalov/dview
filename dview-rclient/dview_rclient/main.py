@@ -60,3 +60,34 @@ def read_event(config_file,data_file,event):
         print(event_data)
     else:
         print(res['data']['message'])
+
+
+@rclient.command()
+@click.option("-c", "--config", "config_file", required=True, help="config file")
+@click.option("-d", "--data", "data_file", required=True, help="input remote data file")
+def get_event_number(config_file,data_file):
+    res = api.get_event_number(config_file,data_file)
+    if (res['status'] == False):
+        print(res['message'])
+        return
+    if (res['data']['event_number'] != None):
+        event_number = res['data']['event_number']
+        print('Number of events:',event_number)
+    else:
+        print(res['data']['message'])
+
+
+@rclient.command()
+@click.option("-c", "--config", "config_file", required=True, help="config file")
+@click.option("-d", "--data", "data_file", required=True, help="input remote data file")
+def get_devices(config_file,data_file):
+    res = api.get_devices(config_file,data_file)
+    if (res['status'] == False):
+        print(res['message'])
+        return
+    if (res['data']['devices'] != None):
+        print('List of connected devices:')
+        for i,dev in enumerate(res['data']['devices']):
+            print('Device#',i+1,':',hex(dev))
+    else:
+        print(res['data']['message'])

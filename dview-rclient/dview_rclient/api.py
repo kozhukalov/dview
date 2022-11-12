@@ -37,3 +37,41 @@ def read_event(config_file,rem_data_file,event):
     except BaseException as e:
         status = False
         return {'message': str(e),'status': status}
+
+def get_event_number(config_file,rem_data_file):
+    try:
+        with open(config_file, "r", encoding="utf-8") as f:
+            cfg = yaml.safe_load(f)
+    except FileNotFoundError:
+        print('No such file or directory: ',config_file)
+        return
+    url = "http://" + str(cfg['DEF_HOST']) + ':' + str(cfg['DEF_PORT']) + "/api/get_event_number"
+    try:
+        with requests.post(url,{'data_file':rem_data_file}) as resp:
+            message = f"Server status code: {resp.status_code}"
+            status = True
+            if resp.status_code != 200:
+                status = False
+            return {'message': message,'status': status, 'data': resp.json()}
+    except BaseException as e:
+        status = False
+        return {'message': str(e),'status': status}
+
+def get_devices(config_file,rem_data_file):
+    try:
+        with open(config_file, "r", encoding="utf-8") as f:
+            cfg = yaml.safe_load(f)
+    except FileNotFoundError:
+        print('No such file or directory: ',config_file)
+        return
+    url = "http://" + str(cfg['DEF_HOST']) + ':' + str(cfg['DEF_PORT']) + "/api/get_devices"
+    try:
+        with requests.post(url,{'data_file':rem_data_file}) as resp:
+            message = f"Server status code: {resp.status_code}"
+            status = True
+            if resp.status_code != 200:
+                status = False
+            return {'message': message,'status': status, 'data': resp.json()}
+    except BaseException as e:
+        status = False
+        return {'message': str(e),'status': status}

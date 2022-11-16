@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "dview-rclient"
+name = "dview"
 version = "1.0.0"
-description = "dview-rclient is a HTTP API and CLI ROOT Framwork based client application for processing data from the following digitizers: [TQDC,ADC64,DRS]"
+description = "dview is a HTTP API and CLI ROOT Framwork based client application for processing data from the following digitizers: [TQDC,ADC64,DRS]"
 authors = ["GreenLab <greenlab@jinr.ru>"]
 license = "Apache License, Version 2.0"
 
@@ -21,4 +21,4 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-dview-rclient = 'dview_rclient.main:rclient'
+dview = 'dview.main:dview'

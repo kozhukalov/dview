@@ -3,7 +3,7 @@ import logging
 from flask import Flask, jsonify
 from flask_restful import Resource, Api, reqparse, abort
 
-from dview_server.decoders.tqdc import TQDCDecoder
+from dview_server.decoders.controller import Controller
 
 logging.basicConfig(level=logging.INFO)
 
@@ -20,20 +20,22 @@ class ReadEvent(Resource):
         data_file = args["data_file"]
         event = args["event"]
         res = {"message": 'ok', "event_data": None}
-        adc = TQDCDecoder()
 
         try:
-            adc.set_data_file(data_file)
+            dev = Controller(data_file)
         except BaseException as e:
             res['message'] = str(e)
             return jsonify(res)
 
         try:
-            adc.file_indexation()
-            res['event_data'] = adc.read_event(event)
+            res['event_data'] = dev.read_event(event)
         except BaseException as e:
             res['message'] = str(e)
             return jsonify(res)
+
+        # generate json buffer file for web interface
+        dev.form_single_wf_buffer(event,res['event_data'])
+
         return jsonify(res)
 
 class GetEventNumber(Resource):
@@ -41,17 +43,15 @@ class GetEventNumber(Resource):
         args = parser.parse_args()
         data_file = args["data_file"]
         res = {"message": 'ok', "event_number": None}
-        adc = TQDCDecoder()
 
         try:
-            adc.set_data_file(data_file)
+            dev = Controller(data_file)
         except BaseException as e:
             res['message'] = str(e)
             return jsonify(res)
 
         try:
-            adc.file_indexation()
-            res['event_number'] = adc.get_event_number()
+            res['event_number'] = dev.get_event_number()
         except BaseException as e:
             res['message'] = str(e)
             return jsonify(res)
@@ -63,17 +63,15 @@ class GetDevices(Resource):
         args = parser.parse_args()
         data_file = args["data_file"]
         res = {"message": 'ok', "devices": None}
-        adc = TQDCDecoder()
 
         try:
-            adc.set_data_file(data_file)
+            dev = Controller(data_file)
         except BaseException as e:
             res['message'] = str(e)
             return jsonify(res)
 
         try:
-            adc.file_indexation()
-            res['devices'] = adc.get_devices()
+            res['devices'] = dev.get_devices()
         except BaseException as e:
             res['message'] = str(e)
             return jsonify(res)

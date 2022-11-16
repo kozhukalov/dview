@@ -3,10 +3,14 @@ import logging
 import struct
 from flask import json
 import numpy as np
+from dview_server.decoders.afi import AFI
 
 logger = logging.getLogger(__name__)
 
 SYNC_WORD = 0x2A502A50              # ADC64 & TQDC2
+SYNC_WORD_TIME = 0x3f60b8a8          # ADC64
+CHANNEL_NUMBER = 64
+
 TQDC_START_SYNC_WORD = 0x72617453   # Start/Stop Run Block
 TQDC_STOP_SYNC_WORD = 0x706F7453    # Start/Stop Run Block
 TQDC_RUN_NUMBER_RECORD_SYNC_WORD = 0x236E7552
@@ -16,139 +20,9 @@ DEF_WF_TEMPLATE_JSON_PATH = '/home/tao/soft/dview/dview-server/dview_server/web/
 
 word_size = 4   # in bytes
 
-# Logger settings
-# add filemode="w" to overwrite
-# logging.basicConfig(level=logging.INFO, filemode="w")
-# logger = logging.getLogger(__name__)
-# fh = logging.FileHandler('tqdc.log')
-# formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-# fh.setFormatter(formatter)
-# logger.addHandler(fh)
-
-class TQDCDecoder:
+class TQDC16VS(AFI):
     def __init__(self):
-        self.eventNum = None
-        self.dataFile = None
-        self.fileIndex = None
-        self.devices = None
-        self.metaData = dict()
-        self.eventData = dict()
-
-
-    def get_event_number(self):
-        return self.eventNum
-
-
-    def get_data_file(self):
-        return self.dataFile
-
-
-    def set_data_file(self,data_file):
-        logger.info("Set data file: " + data_file)
-        if (os.path.isfile(data_file) == False):
-            msg = 'Error: Could not open the file: ' + data_file
-            logger.error(msg)
-            raise Exception(msg)
-        self.dataFile = data_file
-
-
-    def get_devices(self):
-        return self.devices
-
-
-    def load_json_template(self,path,filename):
-        print(path,filename)
-        template_path = os.path.join(path, "static", filename)
-        data = json.load(open(template_path))
-        return data
-
-
-    def save_json_file(self,path,filename,data):
-        dst = "{:s}/static/{:s}".format(path,filename)
-        with open(dst, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
-
-
-    def form_single_wf_buffer(self,event_number,event_data):
-        sn = event_data['meta']['data'][0]['data']['sample_number']   # number of samples for the 1st device
-        single_wf_template = self.load_json_template(DEF_WF_TEMPLATE_JSON_PATH,'wave_t.json')
-        single_wf_template['fNpoints'] = sn
-        fX = [s for s in range(sn)]
-        single_wf_template['fX'] = fX
-        tgraphs_json = dict()
-        for d in event_data['data']:
-            print(d['device'])
-            for ch_data in d['data']:
-                fName = "Device_{:s}_CH{:02d}".format(str(hex(ch_data['devsn'])),ch_data['ch'])
-                single_wf_template['fName'] = fName
-                single_wf_template['fTitle'] = "Single waveform [Dev.: {:s} CH{:02d} Event#{:d}]".format(str(hex(ch_data['devsn'])),\
-                                                                                                            ch_data['ch'],\
-                                                                                                            event_number)
-                single_wf_template['fY'] = ch_data['wf']
-                print(single_wf_template['fName'],single_wf_template['fNpoints'])
-                tgraphs_json.update({fName: dict(single_wf_template)})
-        self.save_json_file(DEF_WF_TEMPLATE_JSON_PATH,'single_wf.json',tgraphs_json)
-
-
-
-    def file_indexation(self):
-        event = 0
-        dt = np.dtype([('ev', np.int32),('po', np.int64), ('size', np.int32)])
-        content = []
-        try:
-            with open(self.dataFile, mode='rb') as f:
-                byte_content = 1
-                while byte_content:
-                    byte_content = f.read(word_size)
-                    byte_content_size = (byte_content.__sizeof__()-5)/8
-                    if (byte_content_size < word_size):
-                        break
-                    word = struct.unpack('<I', byte_content)[0]
-                    # print(word)
-                    if (word == SYNC_WORD):
-                        event += 1
-                        pos = f.tell()-word_size*1
-                        event_header = struct.unpack('<III', f.read(word_size*3))
-                        event_size = event_header[0]
-                        # event_num = event_header[1]   # absolute event number from data
-                        devsn = event_header[2]
-                        content.append((event,pos,event_size))
-                        # print(event_header)
-                        f.seek(pos+event_size)
-        except IOError:
-            msg = 'Error: Could not open the file: ' + self.dataFile
-            logger.error(msg)
-            raise Exception(msg)
-        self.eventNum = event
-        self.fileIndex = np.array(content,dtype=dt)
-        self.devices = self.look_for_devices()
-        if (self.devices == 0):
-            msg = 'Devices are not found in ' + self.dataFile
-            logger.error(msg)
-            raise Exception(msg)
-
-
-
-    def look_for_devices(self):
-        dev = []
-        unique = np.unique(self.fileIndex['size'])
-        if (len(unique)==0):
-            return 0
-        max_size = max(unique)
-        pos = self.fileIndex[self.fileIndex['size']==max_size][0]['po']
-        event_header_size = 3*4     # 12 bytes - event header
-        device_header_size = 2*4    # 8 bytes - device header
-        with open(self.dataFile, mode='rb') as f:
-            f.seek(pos)
-            event_header = struct.unpack('<III', f.read(event_header_size))
-            end = event_header[1]
-            while (end != 0):
-                device_header = struct.unpack('<II', f.read(device_header_size))
-                device_payload_size = (device_header[1] & 0x00FFFFFF)
-                dev.append(device_header[0])
-                f.seek(f.tell()+device_payload_size)
-                end -= (device_payload_size + device_header_size)
-        return dev
+        super(AFI, self).__init__()
 
 
     def read_event(self,event=1):
@@ -285,8 +159,8 @@ class TQDCDecoder:
                             waveform = []
                             for s in range(int(sn/2)):
                                 ind = doffset + moffset + offset + s
-                                waveform.append( struct.unpack('<I', buffer[ind])[0] & 0xFFFF )
-                                waveform.append( (struct.unpack('<I', buffer[ind])[0] & 0xFFFF0000) >> 16 )
+                                waveform.append( int(np.int16(struct.unpack('<I', buffer[ind])[0] & 0xFFFF)) )
+                                waveform.append( int(np.int16((struct.unpack('<I', buffer[ind])[0] & 0xFFFF0000) >> 16)) )
                             ##end of loop over samples
                             wave_list.append({'devsn':device_header['devsn'],'ch': ch,'wf': waveform})
                             doffset += int(sn/2)
@@ -305,13 +179,11 @@ class TQDCDecoder:
             data.update({'sample_number': sn})
             data.update({'active_channels': active_channels})
             dev_list.append({'device': device_header['devsn'], 'data': data})
-            self.metaData.update({"event_number": event,'event_header':event_header,'data':dev_list})
+            meta = dict({"event_number": event,'event_header':event_header,'data':dev_list})
             # Add waveforms
             wave_dev_list.append({'device': device_header['devsn'], 'data': wave_list})
 
             offset += int(device_header['length']/word_size)
         ##end of loop over devices
-        self.eventData.update({'meta': self.metaData, 'data': wave_dev_list})
-        # generate json buffer file for web interface
-        self.form_single_wf_buffer(event,self.eventData)
-        return self.eventData
+        data = dict({'meta': meta, 'data': wave_dev_list})
+        return data

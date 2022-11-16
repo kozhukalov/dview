@@ -1,3 +1,5 @@
 .venv
 __pycache__
 .service
+dview-server/dview_server/web/view/static/single_wf.json
+dview-server/dview_server/decoders/test

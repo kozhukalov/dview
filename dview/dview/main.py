@@ -1,19 +1,19 @@
 import click
-from dview_rclient import api
+from dview import api
 
 @click.group()
-def rclient():
+def dview():
     pass
 
 
-@rclient.command()
+@dview.command()
 @click.option("-c", "--config", "config_file", required=True, help="config file")
 def server_status(config_file):
     res = api.get_server_status(config_file)
     print(f"Server status: {res} [True - server is up, False - server is down]")
 
 
-@rclient.command()
+@dview.command()
 @click.option("-c", "--config", "config_file", required=True, help="config file")
 @click.option("-d", "--data", "data_file", required=True, help="input remote data file")
 @click.option("-e", "--event", "event", required=True, help="event number")
@@ -45,7 +45,7 @@ def read_meta(config_file,data_file,event):
     else:
         print(res['data']['message'])
 
-@rclient.command()
+@dview.command()
 @click.option("-c", "--config", "config_file", required=True, help="config file")
 @click.option("-d", "--data", "data_file", required=True, help="input remote data file")
 @click.option("-e", "--event", "event", required=True, help="event number")
@@ -62,7 +62,7 @@ def read_event(config_file,data_file,event):
         print(res['data']['message'])
 
 
-@rclient.command()
+@dview.command()
 @click.option("-c", "--config", "config_file", required=True, help="config file")
 @click.option("-d", "--data", "data_file", required=True, help="input remote data file")
 def get_event_number(config_file,data_file):
@@ -77,7 +77,7 @@ def get_event_number(config_file,data_file):
         print(res['data']['message'])
 
 
-@rclient.command()
+@dview.command()
 @click.option("-c", "--config", "config_file", required=True, help="config file")
 @click.option("-d", "--data", "data_file", required=True, help="input remote data file")
 def get_devices(config_file,data_file):
